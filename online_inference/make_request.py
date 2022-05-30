@@ -7,7 +7,7 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--DATA_PATH", dest="data_path", type=str, default="../data/raw/heart_cleveland_upload_no_target.csv")
-parser.add_argument("-i", dest="ip", type=str, default="127.0.0.1")
+parser.add_argument("-i", dest="ip", type=str, default="0.0.0.0")
 parser.add_argument("-p", dest="port", type=str, default="8000")
 parser.add_argument("-n", dest="num_requests", type=int)
 
