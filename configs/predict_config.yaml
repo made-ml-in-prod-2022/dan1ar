@@ -1,3 +1,0 @@
-input_data_path: "data/raw/heart_cleveland_upload_no_target.csv"
-model_path: "models/model.pkl"
-output_predict_path: "data/predicted/predict.csv"

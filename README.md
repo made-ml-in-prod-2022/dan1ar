@@ -1,72 +1,63 @@
-MLProd HW1
-==============================
+# Домашнее Задание №3
+<br>
+<p>Чтобы развернуть airflow, предварительно собрав контейнеры</p>
 
-First homework for MlProd in Technopark (VK & BMSTU)
+```
+#Собирать в images/airflow-ml-base
+docker build -t airflow-ml-base:latest .
+```
 
-Installation:
-------------
-    pip3 -r requirments.txt
+<p>Для корректной работы с переменными, созданными из UI</p>
 
-Train:
-------------
-    python3 -m src.train_pipeline configs/train_config.yaml
+```
+export FERNET_KEY=$(python -c "from cryptography.fernet import Fernet; FERNET_KEY = Fernet.generate_key().decode(); print(FERNET_KEY)")
+docker compose up --build
+```
 
-Predict:
-------------
-    python3 -m src.predict_pipeline configs/predict_config.yaml
+<br>
 
-Tests:
-------------
-    pytest tests/
+Легенда:
+1) Откуда-то берутся данные... Мы их используем для обучения МЛ модельки для задачи классификации.
+2) Еженедельно, мы переобучаем модель на новых данных, ручками смотрим на метрики и если класс, то выкатываем ее на прод.
+3) Ежедневно, текущая выбранная нами модель скорит данные и записывает предсказания куда-то.
+4) Эти предсказания используют -- все счастливы =)
 
-Project Organization
-------------
+В ДЗ предлагается на основе `airflow` реализовать описанную выше схему, к деталям:
 
-    ├── LICENSE
-    ├── Makefile           <- Makefile with commands like `make data` or `make train`
-    ├── README.md          <- The top-level README for developers using this project.
-    ├── data
-    │   ├── external       <- Data from third party sources.
-    │   ├── interim        <- Intermediate data that has been transformed.
-    │   ├── processed      <- The final, canonical data sets for modeling.
-    │   └── raw            <- The original, immutable data dump.
-    │
-    ├── docs               <- A default Sphinx project; see sphinx-doc.org for details
-    │
-    ├── models             <- Trained and serialized models, model predictions, or model summaries
-    │
-    ├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-    │                         the creator's initials, and a short `-` delimited description, e.g.
-    │                         `1.0-jqp-initial-data-exploration`.
-    │
-    ├── references         <- Data dictionaries, manuals, and all other explanatory materials.
-    │
-    ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-    │   └── figures        <- Generated graphics and figures to be used in reporting
-    │
-    ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-    │                         generated with `pip freeze > requirements.txt`
-    │
-    ├── setup.py           <- makes project pip installable (pip install -e .) so src can be imported
-    ├── src                <- Source code for use in this project.
-    │   ├── __init__.py    <- Makes src a Python module
-    │   │
-    │   ├── data           <- Scripts to download or generate data
-    │   │   └── make_dataset.py
-    │   │
-    │   ├── features       <- Scripts to turn raw data into features for modeling
-    │   │   └── build_features.py
-    │   │
-    │   ├── models         <- Scripts to train models and then use trained models to make
-    │   │   │                 predictions
-    │   │   ├── predict_model.py
-    │   │   └── train_model.py
-    │   │
-    │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
-    │       └── visualize.py
-    │
-    └── tox.ini            <- tox file with settings for running tox; see tox.readthedocs.io
+**Основная часть:**
 
+- [x] Поднимите airflow локально, используя `docker compose` (можно использовать из примера https://github.com/made-ml-in-prod-2021/airflow-examples/)
+- [] Реализуйте dag, который генерирует данные для обучения модели (генерируйте данные -- можете использовать как генератор синтетики из первой дз, так и что-то из датасетов sklearn). Вам важно проэмулировать ситуации постоянно поступающих данных (5 баллов)
 
---------
+    - записывайте данные в `/data/raw/{{ ds }}/data.csv` и `/data/raw/{{ ds }}/target.csv`
+
+- [] Реализуйте dag, который обучает модель еженедельно, используя данные за текущий день. В вашем пайплайне должно быть как минимум 4 стадии, но дайте волю своей фантазии =) (10 баллов)
+
+    - подготовить данные для обучения (например, считать из `/data/raw/{{ ds }}` и положить `/data/processed/{{ ds }}/train_data.csv`)
+    - расплитить их на train/val
+    - обучить модель на train, сохранить в `/data/models/{{ ds }}`
+    - провалидировать модель на val (сохранить метрики к модельке)
+
+- [] Реализуйте dag, который использует модель ежедневно (5 баллов)
+    - принимает на вход данные из пункта 1 (`data.csv`)
+    - считывает путь до модельки из airflow variables (идея в том, что когда нам нравится другая модель и мы хотим ее на прод)
+    - делает предсказание и записывает их в `/data/predictions/{{ ds }}/predictions.csv`
+
+- [] Вы можете выбрать 2 пути для выполнения ДЗ:
+    - поставить все необходимые пакеты в образ с `airflow` и использовать `BashOperator`, `PythonOperator` (1 балл)
+    - использовать `DockerOperator` -- тогда выполнение каждой из тасок должно запускаться в собственном контейнере  
+      * один из дагов реализован с помощью `DockerOperator` (5 баллов)
+      * все даги реализованы только с помощью `DockerOperator` (пример https://github.com/made-ml-in-prod-2021/airflow-examples/blob/main/dags/11_docker.py). По технике, вы можете использовать такую же структуру как в примере, пакуя в разные докеры скрипты, можете использовать общий докер с вашим пакетом, но с разными точками входа для разных тасок. Прикольно, если вы покажете, что для разных тасок можно использовать разный набор зависимостей (10 баллов)
+
+      https://github.com/made-ml-in-prod-2021/airflow-examples/blob/main/dags/11_docker.py#L27 в этом месте пробрасывается путь с хостовой машины, используйте здесь путь типа `/tmp` или считывайте из переменных окружения.
+
+- [] Традиционно, самооценка (1 балл)
+
+**Дополнительная часть**:
+
+- [] Реализуйте сенсоры на то, что данные готовы для дагов тренировки и обучения (+3 доп балла)
+- [] Протестируйте ваши даги https://airflow.apache.org/docs/apache-airflow/stable/best-practices.html (+5 доп баллов) 
+- [] В `docker compose` так же настройте поднятие `mlflow` и запишите туда параметры обучения, метрики и артефакт (модель) (+5 доп баллов)
+- [] Вместо пути в airflow variables используйте API Mlflow Model Registry. Даг для инференса должен подхватывать последнюю продакшен модель (+5 доп баллов)
+- [] Настройте alert в случае падения дага https://www.astronomer.io/guides/error-notifications-in-airflow (+3 доп балла)
 
