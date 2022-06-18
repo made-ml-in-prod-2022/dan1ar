@@ -22,7 +22,7 @@ default_args = {
 with DAG(
     "predict",
     default_args=default_args,
-    schedule_interval="@weekly",
+    schedule_interval="@daily",
     start_date=days_ago(15),
 ) as dag:
     data_sensor = FileSensor(
