@@ -107,3 +107,6 @@ outputs/*.txt
 try_mlflow.py
 text_for_PR.md
 *.png
+
+# Testing files
+test.py

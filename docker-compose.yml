@@ -87,11 +87,34 @@ services:
     image: airflow-download
     restart: "no"
 
-
   preprocess:
     build:
       context: images/airflow-preprocess
     image: airflow-preprocess
+    restart: "no"
+  
+  train-val-splitter:
+    build:
+      context: images/airflow-train-val-splitter
+    image: airflow-train-val-splitter
+    restart: "no"
+
+  generate-data:
+    build:
+      context: images/airflow-generate-data
+    image: airflow-generate-data
+    restart: "no"
+  
+  train-model:
+    build:
+      context: images/airflow-train-model
+    image: airflow-train-model
+    restart: "no"
+  
+  validate-model:
+    build:
+      context: images/airflow-validate-model
+    image: airflow-validate-model
     restart: "no"
 
 
