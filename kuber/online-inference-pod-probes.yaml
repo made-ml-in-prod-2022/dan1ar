@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: fastapi-ml-pod-probes
+  labels:
+    app: fastapi-ml-pod-probes
+spec:
+  containers:
+    - name: inference
+      image: dan1ar/ml_prod_hw2:v2
+      ports:
+        - name: api
+          containerPort: 5000
+
+      resources:
+        requests:
+          memory: "64Mi"
+          cpu: "0.5"
+        limits:
+          memory: "256Mi"
+          cpu: "1"
+
+      livenessProbe:
+        httpGet:
+          path: /health
+          port: api
+        initialDelaySeconds: 20
+        periodSeconds: 20
+      readinessProbe:
+        tcpSocket:
+          port: api
+        initialDelaySeconds: 30
+        periodSeconds: 30
