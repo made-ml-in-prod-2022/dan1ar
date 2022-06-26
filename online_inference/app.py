@@ -1,6 +1,8 @@
 import logging
 import os
+import sys
 import pickle
+import signal
 
 from typing import List
 import uvicorn
@@ -26,9 +28,9 @@ def main():
 @app.on_event("startup")
 def load_model():
     global model
-    print('STARTUP')
+    logger.info('STARTUP')
     model_path = os.getenv("PATH_TO_MODEL", default='../models/model.pkl')
-    print("PATH_TO_MODEL: ", model_path)
+    logger.info("PATH_TO_MODEL: ", model_path)
     if model_path is None:
         err = f"PATH_TO_MODEL is None"
         logger.error(err)
@@ -47,5 +49,13 @@ def predict(request: TargetModel):
     return make_prediction(request.data, request.features, model)
 
 
+def exit(signum, frame):
+    sys.exit("Exit")
+
 if __name__ == "__main__":
+    # Need for Homewwork 4
+    signal.signal(signal.SIGALRM, exit)
+    signal.alarm(60)
+    # Delete this if you need to use
+
     uvicorn.run("app:app", host="0.0.0.0", port=os.getenv("PORT", 8000))

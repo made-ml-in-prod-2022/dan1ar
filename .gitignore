@@ -91,3 +91,5 @@ target/
 
 #Test
 .pytest_cache
+
+src.egg-info/
